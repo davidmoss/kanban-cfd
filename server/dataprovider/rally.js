@@ -5,13 +5,13 @@ var Promise = require('bluebird'),
     DateUtil = require('../dateUtil').DateUtil;
 
 // Rally config
-var rallyUser = '';
-var rallyPassword = '';
+var rallyUser = 'david.moss@wipro.com';
+var rallyPassword = 'M0ssM0ss!!!!';
 var lookbackPageSize = 2000;
 var wsPageSize = 100; // Max is 100
-var workspace = 0;
-var project = 0;
-var kanbanFieldName = 'c_KanbanState';
+var workspace = 42970205211;
+var project = 42970205295;
+var kanbanFieldName = 'ScheduleState';
 
 function getRallyAuthHeader() {
   var headers = {'Authorization': 'Basic ' +
@@ -58,6 +58,19 @@ function restPromise(url, options) {
 }
 
 var KanbanProvider = {
+  kanbanItemTypes: {
+    'HierarchicalRequirement': 'Story',
+    'Defect': 'Defect'
+  }, // Key is the id used in data provider system.  Value is for display purpose
+  kanbanStatusNames: [
+    'Accepted',
+    'Completed',
+    'In-Progress',
+    'Defined'
+  ], // sequence matters for CFD calculation.  Earlier stage is put at the end
+  owners: {
+    42970205205: 'Dave',
+  }, // Key is the id used in data provider system.  Value is for display
   rallyDailyItemStatus: function(itemType, startCount, allResult) {
 
     function buildInQuery(keyName, items) {
@@ -76,8 +89,8 @@ var KanbanProvider = {
 
     var url =
       'https://rally1.rallydev.com/slm/webservice/v2.0/' + itemType;
-    var userSubquery = buildInQuery('Owner.ObjectID', _.values(config.owners));
-    var kanbanSubQuery = buildInQuery(kanbanFieldName, config.kanbanStatusNames);
+    var userSubquery = buildInQuery('Owner.ObjectID', _.values(this.owners));
+    var kanbanSubQuery = buildInQuery(kanbanFieldName, this.kanbanStatusNames);
 
     url += '?query=(' + userSubquery + ' AND ' + kanbanSubQuery +
       ')&order=Name&fetch=_type,Name,Owner,ObjectID,FormattedID,' + kanbanFieldName +
@@ -113,7 +126,7 @@ var KanbanProvider = {
       };
     }
 
-    var allItems = _.keys(config.kanbanItemTypes).map(this.rallyDailyItemStatus, this);
+    var allItems = _.keys(this.kanbanItemTypes).map(this.rallyDailyItemStatus, this);
 
     return Promise.all(allItems)
       .then(function(result) {
@@ -185,13 +198,13 @@ var KanbanProvider = {
           item.statusChangeLog.push({
             from: snapshot._ValidFrom,
             to: snapshot._ValidTo,
-            status: snapshot.c_KanbanState
+            status: snapshot[kanbanFieldName]
           });
 
           if (item.blockLog.length === 0 || item.blockLog[item.blockLog.length - 1].blocked != snapshot.Blocked) {
             item.blockLog.push({
               blocked: snapshot.Blocked,
-              stage: snapshot.c_KanbanState,
+              stage: snapshot[kanbanFieldName],
               time: snapshot._ValidFrom,
               reason: snapshot.BlockedReason
             });
@@ -203,7 +216,7 @@ var KanbanProvider = {
             item.kanbanizedOn = DateUtil.getDate(snapshot._ValidFrom).toDate();
           }
         });
-
+        
         return _.values(itemStatus);
       });
   },
@@ -216,13 +229,13 @@ var KanbanProvider = {
           workspace + '/artifact/snapshot/query.js';
 
     var findObj = {};
-    findObj[kanbanFieldName] = {'$in': config.kanbanStatusNames};
+    findObj[kanbanFieldName] = {'$in': this.kanbanStatusNames};
     findObj._ProjectHierarchy  = project;
     findObj._ValidFrom = {'$gte': start.toISOString()};
 
     var fields = ['_ValidFrom', '_ValidTo', 'ObjectID', '_TypeHierarchy',
       'Name', 'Owner', 'FormattedID', 'Blocked', 'BlockedReason', 'PlanEstimate', kanbanFieldName],
-        hydrate = ['_TypeHierarchy'];
+        hydrate = ['_TypeHierarchy','ScheduleState'];
 
     return restPromise(dataUrl + '?find=' + JSON.stringify(findObj) +
           '&fields=' + JSON.stringify(fields) +

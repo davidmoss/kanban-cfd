@@ -75,7 +75,7 @@ angular.module('Kanban.service', ['Kanban.config', 'ngResource'])
       snapshotDates.forEach(function(date) {
         seriesByDate[date] = {};
 
-        SYS_CONFIG.kanbanStatusNames.forEach(function(status) {
+        SYS_CONFIG.kanbanStatusNames[SYS_CONFIG.kanbanProvider].forEach(function(status) {
           seriesByDate[date][status] = 0;
         });
       });
@@ -115,7 +115,7 @@ angular.module('Kanban.service', ['Kanban.config', 'ngResource'])
   .factory('ItemDetailService', ['SYS_CONFIG', '$resource',
       function(SYS_CONFIG, $resource) {
     // Last Kanban status doesn't need to show
-    var kanbanStatusInAscOrder = SYS_CONFIG.kanbanStatusNames.slice(1).reverse();
+    var kanbanStatusInAscOrder = SYS_CONFIG.kanbanStatusNames[SYS_CONFIG.kanbanProvider].slice(1).reverse();
 
     function calculateItemKanbanStatusDuration(item) {
       var result = {

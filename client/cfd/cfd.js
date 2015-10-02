@@ -26,7 +26,7 @@ app.controller('KanbanCtrl', ['$scope', 'SYS_CONFIG',
   $scope.snapshots = [];
 
   $scope.owners = [{id: 'ALL', name: 'ALL', selected: true}].concat(
-    _.map(SYS_CONFIG.owners, function(ownerName, ownerId) {
+    _.map(SYS_CONFIG.owners[SYS_CONFIG.kanbanProvider], function(ownerName, ownerId) {
       return {
         id: ownerId,
         name: ownerName,
@@ -44,11 +44,11 @@ app.controller('KanbanCtrl', ['$scope', 'SYS_CONFIG',
     owner.active = i === 0;
   });
 
-  $scope.itemTypes = _.keys(SYS_CONFIG.kanbanItemTypes)
+  $scope.itemTypes = _.keys(SYS_CONFIG.kanbanItemTypes[SYS_CONFIG.kanbanProvider])
     .map(function(type) {
       return {
         id: type,
-        name: SYS_CONFIG.kanbanItemTypes[type],
+        name: SYS_CONFIG.kanbanItemTypes[SYS_CONFIG.kanbanProvider][type],
         selected: true
       };
     });
@@ -210,8 +210,8 @@ app.controller('KanbanCtrl', ['$scope', 'SYS_CONFIG',
   function($scope, SYS_CONFIG, ItemDetailService, Nvd3ChartBuilder, UnitConverter) {
 
   $scope.leadTimeDuration = SYS_CONFIG.defaultLeadTimeDuration;
-  $scope.fromStatus = SYS_CONFIG.defaultLeadTimeStartStatus;
-  $scope.toStatus = SYS_CONFIG.defaultLeadTimeEndStatus;
+  $scope.fromStatus = SYS_CONFIG.defaultLeadTimeStartStatus[SYS_CONFIG.kanbanProvider];
+  $scope.toStatus = SYS_CONFIG.defaultLeadTimeEndStatus[SYS_CONFIG.kanbanProvider];
   $scope.ownerId = null;
   $scope.totalTime = 0;
   $scope.medianLeadTime = 0;

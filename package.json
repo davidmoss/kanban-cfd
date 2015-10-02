@@ -7,7 +7,8 @@
     "Kanban",
     "CFD",
     "Visualize",
-    "Rally"
+    "Rally",
+    "JIRA"
   ],
   "author": "Ken Chen",
   "license": "MIT",
@@ -20,7 +21,8 @@
     "nedb": "^0.10.5",
     "node-schedule": "^0.1.13",
     "restler": "^3.2.0",
-    "socket.io": "^0.9.16"
+    "socket.io": "^0.9.16",
+    "oauth": "^0.9.14"
   },
   "devDependencies": {
     "chai": "~1.9.2",

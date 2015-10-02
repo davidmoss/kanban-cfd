@@ -34,7 +34,7 @@ describe('Rally Snapshot', function() {
           expect(itemFields).to.have.members(_.keys(item));
           expect(item.statusChangeLog.length).to.equal(
             snapshotSummary[item.objectID]);
-          expect(config.kanbanItemTypes).to.include.keys(item.type);
+          expect(rally.kanbanItemTypes).to.include.keys(item.type);
         });
 
         done();
@@ -58,7 +58,7 @@ describe('Rally Snapshot', function() {
       .then(function(result) {
         result.forEach(function(item) {
           expect(itemFields).to.have.members(_.keys(item));
-          expect(config.kanbanItemTypes).to.include.keys(item.type);
+          expect(rally.kanbanItemTypes).to.include.keys(item.type);
         });
 
         done();

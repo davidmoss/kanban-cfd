@@ -5,7 +5,7 @@ angular.module('Kanban.chart', ['Kanban.config', 'Kanban.service'])
       function(SYS_CONFIG, SnapshotService, UnitConverter) {
 
     function tranformCFDData(cfdSeries) {
-      var cfdData = _.map(SYS_CONFIG.kanbanStatusNames, function(status) {
+      var cfdData = _.map(SYS_CONFIG.kanbanStatusNames[SYS_CONFIG.kanbanProvider], function(status) {
         return {
           key: status,
           values: []
