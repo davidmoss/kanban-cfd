@@ -46,7 +46,7 @@ Cumulative Flow diagram is cumulative by its nature and most systems do not supp
 This application runs a schedule job at configrable time daily to capture a snapshot of Kanban Item Status in the system (say, Rally).  The snapshot data is the foundation of CFD graph.
 
 ### Configuration
-File `server\config.js` presents all of the configrable options which is data provider independent.
+File `server\config.js` presents all of the configrable server options which is data provider independent. File `client\cfd\cfd.sys.config.js` presents all of the configrable UI options which include data provider custom labels and configutation.
 
 All of them should be straightforward as comment is provided.
 
@@ -65,6 +65,30 @@ var wsPageSize = 100; // Max is 100
 var workspace = 123456789; // Rally workspace id
 var project = 987654321; // Rally project id in workspace
 var kanbanFieldName = 'c_KanbanState'; // Your Kanban customized field name
+```
+
+Within the KanbanProvider:
+
+```javascript
+  kanbanStatusNames: [] // List of status names setup to capture state transitions of stories
+  owners: {} // Dict of users and userid from within Rally
+
+### If you are using JIRA
+
+You should only need to change user account & project related setting in `server\dataprovider\jira.js`.
+
+```javascript
+var workspace = ''; // Jira workspace as is workspace.atlassian.net
+var project = ''; // Jira project code
+var lookbackPageSize = 50; // Max is 100
+var entryStatus = 'To Do'; // Jira project status 
+```
+
+JIRA uses oauth to login and access the API information. To enable this you need to create a RSA key-pair and enable this as an inbound "Add-on" -> "Application link" with the JIRA administration. The location of the private key should then be accessible and referenced in the server configuration as the `consumerPrivateKeyFile`, matching the `consumerKey` setup.
+
+```
+$ openssl genrsa -out jira.pem 1024
+$ openssl rsa -in jira.pem -pubout -out jira.pub
 ```
 
 ### If you are not using Rally

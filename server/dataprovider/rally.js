@@ -5,8 +5,8 @@ var Promise = require('bluebird'),
     DateUtil = require('../dateUtil').DateUtil;
 
 // Rally config
-var rallyUser = 'david.moss@wipro.com';
-var rallyPassword = 'M0ssM0ss!!!!';
+var rallyUser = '';
+var rallyPassword = '';
 var lookbackPageSize = 2000;
 var wsPageSize = 100; // Max is 100
 var workspace = 42970205211;
