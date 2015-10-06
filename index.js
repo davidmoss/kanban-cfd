@@ -46,14 +46,19 @@ var consumer = new OAuth.OAuth(
 );
 
 function require_login(req, res, next) {
-    if(config.kanbanProvider == 'rally') {
-        next();
-    }
+  if (req.xhr || req.headers.accept.indexOf('json') > -1) {
     if(!req.session.oauthAccessToken) {
-        res.redirect("/session/connect?action="+querystring.escape(req.originalUrl));
-        return;
+      res.status(403).send({ error: 'Authorisation required' });
+      return;
     }
-    next();
+  }
+  else if (config.kanbanProvider == 'jira') {
+    if(!req.session.oauthAccessToken) {
+      res.redirect("/session/connect?action="+querystring.escape(req.originalUrl));
+      return;
+    }
+  }
+  next();
 };
 
 app.configure(function() {
@@ -76,7 +81,7 @@ app.get('/', require_login, function(req, res) {
 
 app.post('/initHistoricalData', require_login, function(req, res) {
   var startDate = DateUtil.getDate(req.param('startDate')),
-      kanbanProvider = new KanbanProvider(consumer, request.session);
+      kanbanProvider = new KanbanProvider(consumer, req.session);
 
   kanbanProvider.getHistoricalKanbanStatus(startDate)
     .then(function(kanbanItems) {

@@ -11,49 +11,11 @@ var lookbackPageSize = 50;
 var entryStatus = 'To Do';
 
 
-function resolveRestResult(resolver, result, response) {
-  var isSuccess = true,
-      errMsg = '';
-
-  if (result instanceof Error) {
-    errMsg = result.valueOf();
-    isSuccess = false;
-  } else {
-    if (result.error) {
-      isSuccess = false;
-      errMsg = result.error.valueOf();
-    } else if (response.statusCode >= 400) {
-      var msg = result.toString();
-      if (typeof result === 'object') {
-        msg = JSON.stringify(result);
-      }
-
-      isSuccess = false;
-      errMsg = 'HTTP status: ' + response.statusCode +
-        ' Msg: ' + msg;
-    }
-  }
-
-  if (isSuccess) {
-    resolver.resolve(JSON.parse(result));
-  } else {
-    resolver.reject(errMsg);
-  }
-}
-
-function restPromise(url, options) {
-  var resolver = Promise.defer();
-
-  rest.request(url, options || {})
-    .on('complete', resolveRestResult.bind(this, resolver));
-
-  return resolver.promise;
-}
-
 function KanbanProvider(consumer, session){
-  var oauth = consumer,
-      oauthAccessToken = session.oauthAccessToken,
-      oauthAccessTokenSecret = session.oauthAccessTokenSecret;
+
+  this.oauth = consumer;
+  this.oauthAccessToken = session.oauthAccessToken;
+  this.oauthAccessTokenSecret = session.oauthAccessTokenSecret;
 
   this.resolveOauthResult = function(resolver, error, result, response) {
     if (error) {
@@ -65,12 +27,12 @@ function KanbanProvider(consumer, session){
 
   this.oauthPromise = function(url) {
     var resolver = Promise.defer();
-
+    
     this.oauth.get(url, 
         this.oauthAccessToken, 
         this.oauthAccessTokenSecret, 
         "application/json",
-        resolveOauthResult.bind(this, resolver)
+        this.resolveOauthResult.bind(this, resolver)
     );
 
     return resolver.promise;
@@ -212,7 +174,7 @@ function KanbanProvider(consumer, session){
     var fields = ['issuetype', 'created', 'updated', 'status', 'key', 'summary', 'priority', 'reporter'],
         expand = ['changelog'];
 
-    return restPromise(dataUrl + '?jql=' + jql +
+    return this.oauthPromise(dataUrl + '?jql=' + jql +
       '&fields=' + fields.toString() +
       '&maxResults=' + lookbackPageSize +
       '&expand=' + expand.toString() +
