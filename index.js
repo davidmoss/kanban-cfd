@@ -39,7 +39,7 @@ var consumer = new OAuth.OAuth(
   config["consumerKey"],
   "",
   "1.0",
-  "http://localhost:3000/session/callback",
+  "http://"+config.server+":"+config.port+"/session/callback",
   "RSA-SHA1",
   null,
   privateKeyData
