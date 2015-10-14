@@ -10,6 +10,7 @@ var project = 'PDT';
 var lookbackPageSize = 50;
 var entryStatus = 'To Do';
 
+var jiraAPI = 'https://'+workspace+'.atlassian.net/rest/api/latest/';
 
 function KanbanProvider(consumer, session){
 
@@ -38,8 +39,34 @@ function KanbanProvider(consumer, session){
     return resolver.promise;
   };
 
-  this.getHistoricalKanbanStatus = function(startDate) {
-    return this.getSnapshot(startDate)
+  this.getKanbanStatuses = function() {
+
+  };
+
+  this.getProjectCodes = function() {
+    return this.oauthPromise(jiraAPI + 'project')
+      .bind(this)
+      .then(function(projects) {
+        var projectCodes = [
+          //{
+          // code: projectCode,
+          // name: projectName,
+          //}
+        ];
+
+        projects.forEach(function(project) {
+          projectCodes.push({
+            code: project.key,
+            name: project.name
+          });
+        });
+
+        return projectCodes;
+      });
+  };
+
+  this.getHistoricalKanbanStatus = function(startDate, projectId) {
+    return this.getSnapshot(startDate, projectId)
       .then(function(snapshots) {
         var itemStatus = {
           // objectID: {
@@ -117,7 +144,7 @@ function KanbanProvider(consumer, session){
 
           item.owner = snapshot.fields.reporter.name;
           item.name = '[' + snapshot.key + '] ' + snapshot.fields.summary;
-          item.estimate = 5; // need to get the correct estimate field
+          item.estimate = 5; // TODO: need to get the correct estimate field
 
           snapshot.changelog.histories.forEach(function(change){
             for (var i = change.items.length - 1; i >= 0; i--) {
@@ -143,6 +170,7 @@ function KanbanProvider(consumer, session){
             status: lastChange.status
           });
 
+          // TODO: need to identify blocked stories
           if (item.blockLog.length === 0 || item.blockLog[item.blockLog.length - 1].blocked != snapshot.Blocked) {
             item.blockLog.push({
               blocked: snapshot.Blocked | false,
@@ -163,18 +191,18 @@ function KanbanProvider(consumer, session){
       });
   };
 
-  this.getSnapshot = function(startDate, startCount, allResult) {
+  this.getSnapshot = function(startDate, projectId, startCount, allResult) {
     var start = DateUtil.getDate(startDate),
         idx = startCount || 0,
         result = allResult || [],
-        dataUrl = 'https://'+workspace+'.atlassian.net/rest/api/latest/search/';
+        project = projectId || project;
 
     var jql = 'project=' + project;
 
     var fields = ['issuetype', 'created', 'updated', 'status', 'key', 'summary', 'priority', 'reporter'],
         expand = ['changelog'];
 
-    return this.oauthPromise(dataUrl + '?jql=' + jql +
+    return this.oauthPromise(jiraAPI + 'search?jql=' + jql +
       '&fields=' + fields.toString() +
       '&maxResults=' + lookbackPageSize +
       '&expand=' + expand.toString() +
@@ -186,7 +214,7 @@ function KanbanProvider(consumer, session){
 
         if (result.length < response.total) {
           // Recursively call itself to get all snapshot
-          return this.getSnapshot(start, result.length, result);
+          return this.getSnapshot(start, project, result.length, result);
         } else {
           return result;
         }

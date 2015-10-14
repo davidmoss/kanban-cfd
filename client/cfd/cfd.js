@@ -5,8 +5,8 @@ var app = angular.module('Kanban', ['ngResource', 'ui.bootstrap',
   'nvd3ChartDirectives', 'Kanban.config', 'Kanban.service', 'Kanban.chart']);
 
 app.controller('KanbanCtrl', ['$scope', 'SYS_CONFIG',
-  'ItemDetailService', 'SnapshotService', 'QueryBuilder', '$q', '$resource',
-    function($scope, SYS_CONFIG, ItemDetailService, SnapshotService, QueryBuilder, $q,
+  'ItemDetailService', 'SnapshotService', 'ProjectService', 'QueryBuilder', '$q', '$resource',
+    function($scope, SYS_CONFIG, ItemDetailService, SnapshotService, ProjectService, QueryBuilder, $q,
       $resource) {
 
   $scope.dateFormat = 'yyyy-MM-dd';
@@ -22,8 +22,11 @@ app.controller('KanbanCtrl', ['$scope', 'SYS_CONFIG',
   };
   $scope.showByOwner = false;
 
+  $scope.projectId = '';
+
   $scope.kanbanItems = [];
   $scope.snapshots = [];
+  $scope.projectCodes = [];
 
   $scope.owners = [{id: 'ALL', name: 'ALL', selected: true}].concat(
     _.map(SYS_CONFIG.owners[SYS_CONFIG.kanbanProvider], function(ownerName, ownerId) {
@@ -115,6 +118,10 @@ app.controller('KanbanCtrl', ['$scope', 'SYS_CONFIG',
     $scope.$broadcast('refresh', null, $scope.getSelected(newValue));
   }, true);
 
+  $scope.$watch('projectId', function(newValue) {
+    $scope.initHistoricalData();
+  }, true);
+
   $scope.reloadData = function() {
     var params = QueryBuilder.getQueryParam($scope);
 
@@ -131,6 +138,15 @@ app.controller('KanbanCtrl', ['$scope', 'SYS_CONFIG',
   };
 
   $scope.reloadData();
+
+  $scope.loadProjects = function() {
+    ProjectService.loadProjects()
+      .then(function(projectCodes) {
+        $scope.projectCodes = projectCodes;
+      });
+  }
+
+  $scope.loadProjects();
 
   // var socket = io.connect('/');
 

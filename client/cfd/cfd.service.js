@@ -26,7 +26,8 @@ angular.module('Kanban.service', ['Kanban.config', 'ngResource'])
         return {
           startDate: getDateParam($scope.startDate),
           endDate: getDateParam($scope.endDate),
-          owners: ownerIds
+          owners: ownerIds,
+          project: $scope.projectId
         };
       }
     };
@@ -199,6 +200,21 @@ angular.module('Kanban.service', ['Kanban.config', 'ngResource'])
           return (owner === 'ALL' || item.owner == owner)
             && itemTypes.indexOf(item.type) > -1;
         });
+      }
+    };
+  }])
+  .factory('ProjectService', ['SYS_CONFIG', '$resource',
+      function(SYS_CONFIG, $resource) {
+    
+    var ProjectService =
+      $resource('/projectDetail', {}, {'load':  {method:'GET', isArray: false}});
+
+    return {
+      loadProjects: function(query) {
+        return ProjectService.load(query).$promise
+          .then(function(response) {
+            return response.result;
+          });
       }
     };
   }]);

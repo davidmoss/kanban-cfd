@@ -46,16 +46,17 @@ var consumer = new OAuth.OAuth(
 );
 
 function require_login(req, res, next) {
-  if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+  
+  if (config.kanbanProvider == 'jira') {
     if(!req.session.oauthAccessToken) {
-      res.status(403).send({ error: 'Authorisation required' });
-      return;
-    }
-  }
-  else if (config.kanbanProvider == 'jira') {
-    if(!req.session.oauthAccessToken) {
-      res.redirect("/session/connect?action="+querystring.escape(req.originalUrl));
-      return;
+      if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        res.status(403).send({ error: 'Authorisation required' });
+        return;
+      }
+      else {
+        res.redirect("/session/connect?action="+querystring.escape(req.originalUrl));
+        return;
+      }
     }
   }
   next();
@@ -81,11 +82,31 @@ app.get('/', require_login, function(req, res) {
 
 app.post('/initHistoricalData', require_login, function(req, res) {
   var startDate = DateUtil.getDate(req.param('startDate')),
-      kanbanProvider = new KanbanProvider(consumer, req.session);
+      projectId = req.param('project');
 
-  kanbanProvider.getHistoricalKanbanStatus(startDate)
+  if (config.kanbanProvider == 'jira') {
+    var kanbanProvider = new KanbanProvider(consumer, req.session);
+  }
+  else {
+   var kanbanProvider = KanbanProvider; 
+  }
+
+  kanbanProvider.getHistoricalKanbanStatus(startDate, projectId)
     .then(function(kanbanItems) {
       return kanbanStorage.initHistoricalData(kanbanItems, startDate);
+    })
+    .then(function(result) {
+      responseConstructor(res, true, result);
+    })
+    .catch(responseConstructor.bind(this, res, false));
+});
+
+app.get('/initProjectCodes', require_login, function(req, res) {
+  var kanbanProvider = new KanbanProvider(consumer, req.session);
+
+  kanbanProvider.getProjectCodes()
+    .then(function(projectCodes) {
+      return kanbanStorage.initProjectCodes(projectCodes);
     })
     .then(function(result) {
       responseConstructor(res, true, result);
@@ -123,6 +144,13 @@ app.get('/itemDetail', require_login, function(req, res) {
     .catch(responseConstructor.bind(this, res, false));
 });
 
+app.get('/projectDetail', require_login, function(req, res) {
+
+  kanbanStorage.getProjects()
+    .then(responseConstructor.bind(this, res, true))
+    .catch(responseConstructor.bind(this, res, false));
+});
+
 app.get('/session/connect', function(req, res){
   consumer._authorize_callback = consumer._authorize_callback + (req.param('action') && req.param('action') != "" ? "?action="+querystring.escape(req.param('action')) : "");
 
@@ -130,7 +158,7 @@ app.get('/session/connect', function(req, res){
     function(error, oauthToken, oauthTokenSecret, results) {
       if (error) {
         console.log(error.data);
-        response.send('Error getting OAuth access token');
+        res.send('Error getting OAuth access token');
       }
       else {
         req.session.oauthRequestToken = oauthToken;

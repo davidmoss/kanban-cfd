@@ -53,6 +53,7 @@ function KanbanStorage(dataFileLocation) {
   var dataFileLoc = dataFileLocation || config.dataFileLocation || './data/',
       itemStore = new Datastore({ filename: dataFileLoc + 'kanbanItems.json', autoload: true }),
       snapshotStore = new Datastore({ filename: dataFileLoc + 'snapshot.json', autoload: true });
+      projectStore = new Datastore({ filename: dataFileLoc + 'project.json', autoload: true });
 
   var snapshotInsert = Promise.promisify(snapshotStore.insert, snapshotStore),
       snapshotFind = Promise.promisify(snapshotStore.find, snapshotStore),
@@ -60,7 +61,10 @@ function KanbanStorage(dataFileLocation) {
       itemRemove = Promise.promisify(itemStore.remove, itemStore),
       itemInsert = Promise.promisify(itemStore.insert, itemStore),
       itemFind = Promise.promisify(itemStore.find, itemStore),
-      itemUpdate = Promise.promisify(itemStore.update, itemStore);
+      itemUpdate = Promise.promisify(itemStore.update, itemStore),
+      projectFind = Promise.promisify(projectStore.find, projectStore),
+      projectInsert = Promise.promisify(projectStore.insert, projectStore),
+      projectRemove = Promise.promisify(projectStore.remove, projectStore);
 
   this.sortItemStatusChangeLog = function(item) {
     function comparator(a, b) {
@@ -353,6 +357,31 @@ function KanbanStorage(dataFileLocation) {
               snapshots: snapshots
             };
           });
+      });
+  };
+
+  /**
+  The expects input is an array containing the project code and name
+  { 
+    projectCode: projectName
+  }
+  */
+  this.saveProject = function(projectCodes) {
+    return projectInsert(projectCodes);
+  };
+
+  this.getProjects = function() {
+    return getData('', '', projectFind);
+  };
+
+  this.initProjectCodes = function(projectCodes) {
+
+    return projectRemove({}, {multi: true})
+      .then(
+        this.saveProject(projectCodes)
+      )
+      .then(function() {
+        return projectCodes;
       });
   };
 }

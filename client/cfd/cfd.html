@@ -50,19 +50,25 @@
         <input type="checkbox" ng-model="showByOwner"/>
         <label>Show graph by Owner</label>
       </div>
-      <div class="form-group col-md-12">
-        <label ng-show="owners.length > 1" style="margin-left: 10px;">Owners: </label>
+      <div class="form-group col-md-12" ng-show="owners.length > 1">
+        <label style="margin-left: 10px;">Owners: </label>
         <span ng-repeat="owner in owners">
           <input type="checkbox" ng-model="owner.selected"/>
           <span>{{owner.name}}</span>
         </span>
       </div>
-      <div class="form-group col-md-12">
-        <label ng-show="itemTypes.length > 1" style="margin-left: 10px;">Types: </label>
+      <div class="form-group col-md-12" ng-show="itemTypes.length > 1">
+        <label style="margin-left: 10px;">Types: </label>
         <span ng-repeat="type in itemTypes">
           <input type="checkbox" ng-model="type.selected"/>
           <span>{{type.name}}</span>
         </span>
+      </div>
+      <div class="form-group col-md-12" ng-show="projectCodes.length > 1">
+        <label for="project" style="margin-left: 10px;">Project: </label>
+        <select name="project" ng-model="projectId">
+          <option ng-selected="projectCode.code==projectId" ng-repeat="projectCode in projectCodes" value="{{projectCode.code}}">{{projectCode.name}}</option>
+        </select>
       </div>
     </form>
   </div>

@@ -9,8 +9,8 @@ var rallyUser = '';
 var rallyPassword = '';
 var lookbackPageSize = 2000;
 var wsPageSize = 100; // Max is 100
-var workspace = 42970205211;
-var project = 42970205295;
+var workspace = 12345;
+var project = 12345;
 var kanbanFieldName = 'ScheduleState';
 
 function getRallyAuthHeader() {
@@ -135,8 +135,8 @@ var KanbanProvider = {
         }, []);
       });
   },
-  getHistoricalKanbanStatus: function(startDate) {
-    return this.getRallySnapshot(startDate)
+  getHistoricalKanbanStatus: function(startDate, projectId) {
+    return this.getRallySnapshot(startDate, projectId)
       .then(function(snapshots) {
         var itemStatus = {
           // objectID: {
@@ -220,10 +220,11 @@ var KanbanProvider = {
         return _.values(itemStatus);
       });
   },
-  getRallySnapshot: function(startDate, startCount, allResult) {
+  getRallySnapshot: function(startDate, projectId, startCount, allResult) {
     var start = DateUtil.getDate(startDate),
         idx = startCount || 0,
         result = allResult || [],
+        project = projectId || project,
         dataUrl =
           'https://rally1.rallydev.com/analytics/v2.0/service/rally/workspace/' +
           workspace + '/artifact/snapshot/query.js';
@@ -236,7 +237,7 @@ var KanbanProvider = {
     var fields = ['_ValidFrom', '_ValidTo', 'ObjectID', '_TypeHierarchy',
       'Name', 'Owner', 'FormattedID', 'Blocked', 'BlockedReason', 'PlanEstimate', kanbanFieldName],
         hydrate = ['_TypeHierarchy','ScheduleState'];
-
+    
     return restPromise(dataUrl + '?find=' + JSON.stringify(findObj) +
           '&fields=' + JSON.stringify(fields) +
           '&hydrate=' + JSON.stringify(hydrate) +
@@ -248,7 +249,7 @@ var KanbanProvider = {
 
         if (result.length < rallyResponse.TotalResultCount) {
           // Recursively call itself to get all snapshot
-          return this.getRallySnapshot(start, result.length, result);
+          return this.getRallySnapshot(start, project, result.length, result);
         } else {
           return result;
         }
